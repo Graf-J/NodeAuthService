@@ -5,9 +5,7 @@ const app = express();
 
 app.use(express.json());
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello World');
-})
+app.use('/auth', require('./routers/auth.router'));
 
 app.use((_req: Request, _res: Response, next: NextFunction) => {
     next(createError.NotFound());
