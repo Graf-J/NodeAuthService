@@ -1,4 +1,5 @@
 import express, { Router } from 'express';
+import * as prisma from '../db/prisma';
 import { 
     register, 
     login, 

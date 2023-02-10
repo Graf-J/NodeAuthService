@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { prisma } from '../db/prisma';
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     res.send('register');
