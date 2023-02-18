@@ -8,7 +8,7 @@ import {
     verifyMail, 
     forgotPassword, 
     resetPassword, 
-    jwks 
+    publicKey 
 } from '../controllers/auth.controller';
 const router: Router = express.Router();
 
@@ -20,6 +20,6 @@ router.post('/send-verify-mail', sendVerifyMail);
 router.post('/verify-mail', verifyMail);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
-router.get('/jwks', jwks);
+router.get('/public-key', publicKey);
 
 module.exports = router;

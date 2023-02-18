@@ -22,6 +22,7 @@ import {
     validateEmailBody,
     validateResetPasswordBody
 } from '../validators/auth.validators';
+import { publicRsaKey } from '../certs/public';
 import { prisma } from '../db/prisma';
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -194,8 +195,12 @@ const resetPassword = async (req: Request, res: Response, next: NextFunction): P
     }
 }
 
-const jwks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    res.send('jwks');
+const publicKey = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        res.json({ publicRsaKey });
+    } catch (error) {
+        next(error);
+    }
 }
 
 export {
@@ -207,5 +212,5 @@ export {
     verifyMail,
     forgotPassword,
     resetPassword,
-    jwks
+    publicKey
 }
