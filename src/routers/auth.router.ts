@@ -1,5 +1,4 @@
 import express, { Router } from 'express';
-import * as prisma from '../db/prisma';
 import { 
     register, 
     login, 
@@ -17,7 +16,7 @@ router.post('/register', register);
 router.post('/login', login);
 router.delete('/logout', logout)
 router.post('/refresh-token', refreshToken);
-router.post('send-verify-mail', sendVerifyMail);
+router.post('/send-verify-mail', sendVerifyMail);
 router.post('/verify-mail', verifyMail);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
