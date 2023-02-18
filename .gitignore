@@ -27,3 +27,9 @@ test-results/
 
 # Coverage reports
 coverage/
+
+# Rest tests
+http.rest
+
+# Certificates
+certs
