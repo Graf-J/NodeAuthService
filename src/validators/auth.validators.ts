@@ -27,8 +27,17 @@ const validateVerifyMailBody = (data) => {
     return schema.validate(data);
 }
 
+const validateRefreshTokenBody = (data) => {
+    const schema = Joi.object({
+        refreshToken: Joi.string().required()
+    })
+
+    return schema.validate(data);
+}
+
 export {
     validateRegisterBody,
     validateLoginBody,
-    validateVerifyMailBody
+    validateVerifyMailBody,
+    validateRefreshTokenBody
 }

@@ -5,14 +5,16 @@ import {
     isPasswordValid, 
     generateRandomToken, 
     generateAccessToken, 
-    generateRefreshToken 
+    generateRefreshToken,
+    verifyRefreshToken
 } from '../services/auth.service';
 import MailClient from '../services/mail.service';
-import { setRefreshToken } from '../services/redis.service';
+import { getRefreshToken, setRefreshToken } from '../services/redis.service';
 import { 
     validateRegisterBody, 
     validateLoginBody, 
-    validateVerifyMailBody 
+    validateVerifyMailBody,
+    validateRefreshTokenBody
 } from '../validators/auth.validators';
 import { prisma } from '../db/prisma';
 
@@ -53,8 +55,8 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<v
         const isPWValid = await isPasswordValid(body.value.password, user.passwordHash);
         if (!isPWValid) throw createError.Conflict('Password is not correct');
 
-        const refreshToken = generateRefreshToken(user.id);
-        setRefreshToken(user.id, refreshToken, 365 * 24 * 60 * 60);
+        const refreshToken = generateRefreshToken(user.id, user.role);
+        await setRefreshToken(user.id, refreshToken, 365 * 24 * 60 * 60);
 
         const accessToken = generateAccessToken(user.id, user.role);
 
@@ -69,7 +71,23 @@ const logout = async (req: Request, res: Response, next: NextFunction): Promise<
 }
 
 const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    res.send('refreshToken');
+    try {
+        const body = validateRefreshTokenBody(req.body);
+        if (body.error) throw createError.BadRequest(body.error.message);
+    
+        const { userId, userRole } = verifyRefreshToken(body.value.refreshToken);
+        const refreshToken = await getRefreshToken(userId);
+    
+        if (!refreshToken === body.value.refreshToken) throw createError.Unauthorized('Refresh Token not valid');
+    
+        const newAccessToken = generateAccessToken(userId, userRole);
+        const newRefreshToken = generateRefreshToken(userId, userRole);
+    
+        res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+    } catch (error) {
+        next(error);
+    }
+    
 }
 
 const sendVerifyMail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

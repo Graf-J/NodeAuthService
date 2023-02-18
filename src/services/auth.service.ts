@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import createError from 'http-errors';
 import { privateRsaKey } from '../certs/private';
 
 const hashPassword = async (password: string): Promise<string> => {
@@ -27,9 +28,10 @@ const generateAccessToken = (id: string, role: string): string => {
     return token;
 }
 
-const generateRefreshToken = (id: string): string => {
+const generateRefreshToken = (id: string, role: string): string => {
     const payload = {
-        userId: id
+        userId: id,
+        userRole: role
     }
     const secret = process.env.REFRESH_TOKEN_SECRET
     const options = {
@@ -39,6 +41,18 @@ const generateRefreshToken = (id: string): string => {
 
     const token = jwt.sign(payload, secret, options);
     return token;
+}
+
+const verifyRefreshToken = (refreshToken: string) => {
+    try {
+        const decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        return {
+            userId: decodedToken['userId'],
+            userRole: decodedToken['userRole']
+        }
+    } catch (error) {
+        throw createError.Unauthorized(error.message);
+    }
 }
 
 const generateRandomToken = (): string => {
@@ -51,5 +65,6 @@ export {
     isPasswordValid,
     generateRandomToken,
     generateAccessToken,
-    generateRefreshToken
+    generateRefreshToken,
+    verifyRefreshToken
 }

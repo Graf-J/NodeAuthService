@@ -1,9 +1,15 @@
 import redis from '../db/redis';
 
-const setRefreshToken = (userId: string, refreshToken: string, expiration: number) => {
-    redis.SET(userId, refreshToken, { EX: expiration });
+const setRefreshToken = async (userId: string, refreshToken: string, expiration: number) => {
+    await redis.SET(userId, refreshToken, { EX: expiration });
+}
+
+const getRefreshToken = async (userId: string): Promise<string | null> => {
+    const refreshToken = await redis.GET(userId);
+    return refreshToken;
 }
 
 export {
-    setRefreshToken
+    setRefreshToken,
+    getRefreshToken
 }

@@ -2,7 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 import { 
     validateRegisterBody, 
     validateLoginBody,
-    validateVerifyMailBody
+    validateVerifyMailBody,
+    validateRefreshTokenBody
 } from './auth.validators';
 
 describe('validateRegisterBody', () => {
@@ -134,6 +135,24 @@ describe('validateVerifyMailBody', () => {
             verifyToken: 'test-token'
         };
         const { error, value } = validateVerifyMailBody(data);
+        expect(error).toBeUndefined();
+        expect(value).toEqual(data);
+    });
+})
+
+describe('validateRefreshTokenBody', () => {
+    it('returns error if refreshToken is not provided', () => {
+        const data = { };
+        const { error } = validateRefreshTokenBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch(/"refreshToken" is required/);
+    });
+
+    it('returns value if refreshToken is provided', () => {
+        const data = {
+            refreshToken: 'test-token'
+        };
+        const { error, value } = validateRefreshTokenBody(data);
         expect(error).toBeUndefined();
         expect(value).toEqual(data);
     });
