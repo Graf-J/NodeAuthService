@@ -107,7 +107,7 @@ const verifyMail = async (req: Request, res: Response, next: NextFunction): Prom
 
         res.json({ message: 'Verified Mail-Adress' });
     } catch (error) {
-        next(error.message);
+        next(error);
     }
 }
 

@@ -1,10 +1,40 @@
 import express, { Request, Response, NextFunction } from 'express';
 import createError, { HttpError } from 'http-errors';
+import { AuthRequest } from './models/authRequest';
+import { isUser, isAdmin, isSuperUser } from './middleware/auth.middleware';
 require('dotenv').config();
 
 const app = express();
 
 app.use(express.json());
+
+app.get('/open', (req: Request, res: Response) => {
+    res.send('Open Endpoint works');
+})
+
+app.get('/secure/user', [isUser], (req: AuthRequest, res: Response) => {
+    res.json({ 
+        message: 'Secure User-Endpoint works',
+        userId: req.userId,
+        userRole: req.userRole
+    });
+})
+
+app.get('/secure/admin', [isAdmin], (req: AuthRequest, res: Response) => {
+    res.json({ 
+        message: 'Secure Admin-Endpoint works',
+        userId: req.userId,
+        userRole: req.userRole
+    });
+})
+
+app.get('/secure/superuser', [isSuperUser], (req: AuthRequest, res: Response) => {
+    res.json({ 
+        message: 'Secure SuperUser-Endpoint works',
+        userId: req.userId,
+        userRole: req.userRole
+    });
+})
 
 app.use('/auth', require('./routers/auth.router'));
 
