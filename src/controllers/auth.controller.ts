@@ -1,9 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import createError from 'http-errors';
-import { hashPassword, isPasswordValid, generateRandomToken, generateAccessToken, generateRefreshToken } from '../services/auth.service';
+import { 
+    hashPassword, 
+    isPasswordValid, 
+    generateRandomToken, 
+    generateAccessToken, 
+    generateRefreshToken 
+} from '../services/auth.service';
 import MailClient from '../services/mail.service';
 import { setRefreshToken } from '../services/redis.service';
-import { validateRegisterBody, validateLoginBody } from '../validators/auth.validators';
+import { 
+    validateRegisterBody, 
+    validateLoginBody, 
+    validateVerifyMailBody 
+} from '../validators/auth.validators';
 import { prisma } from '../db/prisma';
 
 const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -82,7 +92,23 @@ const sendVerifyMail = async (req: Request, res: Response, next: NextFunction): 
 }
 
 const verifyMail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    res.send('verifyMail');
+    try {
+        const body = validateVerifyMailBody(req.body);
+        if (body.error) throw createError.BadRequest(body.error.message);
+    
+        const user = await prisma.user.findFirst({ where: { verifyToken: body.value.verifyToken }});
+        if (!user) throw createError.NotFound('User is not registerd');
+        if (user.verified) throw createError.Conflict('Users Email already verified');
+    
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { verified: true }
+        })
+
+        res.json({ message: 'Verified Mail-Adress' });
+    } catch (error) {
+        next(error.message);
+    }
 }
 
 const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

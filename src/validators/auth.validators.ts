@@ -19,7 +19,16 @@ const validateLoginBody = (data) => {
     return schema.validate(data);
 }
 
+const validateVerifyMailBody = (data) => {
+    const schema = Joi.object({
+        verifyToken: Joi.string().required()
+    })
+
+    return schema.validate(data);
+}
+
 export {
     validateRegisterBody,
-    validateLoginBody
+    validateLoginBody,
+    validateVerifyMailBody
 }
