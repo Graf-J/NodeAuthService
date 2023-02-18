@@ -9,7 +9,11 @@ import {
     verifyRefreshToken
 } from '../services/auth.service';
 import MailClient from '../services/mail.service';
-import { getRefreshToken, setRefreshToken } from '../services/redis.service';
+import { 
+    getRefreshToken, 
+    setRefreshToken, 
+    deleteRefreshToken 
+} from '../services/redis.service';
 import { 
     validateRegisterBody, 
     validateLoginBody, 
@@ -67,7 +71,17 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<v
 }
 
 const logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    res.send('logout');
+    try {
+        const body = validateRefreshTokenBody(req.body);
+        if (body.error) throw createError.BadRequest(body.error.message);
+        
+        const { userId } = verifyRefreshToken(body.value.refreshToken);
+        await deleteRefreshToken(userId);
+
+        res.json({ message: 'User logged out' });
+    } catch (error) {
+        next(error);
+    }
 }
 
 const refreshToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -82,8 +96,9 @@ const refreshToken = async (req: Request, res: Response, next: NextFunction): Pr
     
         const newAccessToken = generateAccessToken(userId, userRole);
         const newRefreshToken = generateRefreshToken(userId, userRole);
+        await setRefreshToken(userId, newRefreshToken, 365 * 24 * 60 * 60);
     
-        res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
+        res.json({ refreshToken: newRefreshToken, accessToken: newAccessToken });
     } catch (error) {
         next(error);
     }

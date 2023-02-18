@@ -9,7 +9,12 @@ const getRefreshToken = async (userId: string): Promise<string | null> => {
     return refreshToken;
 }
 
+const deleteRefreshToken = async (userId: string) => {
+    await redis.DEL(userId);
+}
+
 export {
     setRefreshToken,
-    getRefreshToken
+    getRefreshToken,
+    deleteRefreshToken
 }
