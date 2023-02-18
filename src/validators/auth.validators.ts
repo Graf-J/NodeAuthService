@@ -35,9 +35,29 @@ const validateRefreshTokenBody = (data) => {
     return schema.validate(data);
 }
 
+const validateEmailBody = (data) => {
+    const schema = Joi.object({
+        email: Joi.string().email().required()
+    })
+
+    return schema.validate(data);
+}
+
+const validateResetPasswordBody = (data) => {
+    const schema = Joi.object({
+        resetPasswordToken: Joi.string().required(),
+        password: Joi.string().min(6).required(),
+        comparePassword: Joi.string().required().valid(Joi.ref('password'))
+    })
+
+    return schema.validate(data);
+}
+
 export {
     validateRegisterBody,
     validateLoginBody,
     validateVerifyMailBody,
-    validateRefreshTokenBody
+    validateRefreshTokenBody,
+    validateEmailBody,
+    validateResetPasswordBody
 }

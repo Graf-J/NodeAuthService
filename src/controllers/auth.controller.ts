@@ -18,7 +18,9 @@ import {
     validateRegisterBody, 
     validateLoginBody, 
     validateVerifyMailBody,
-    validateRefreshTokenBody
+    validateRefreshTokenBody,
+    validateEmailBody,
+    validateResetPasswordBody
 } from '../validators/auth.validators';
 import { prisma } from '../db/prisma';
 
@@ -60,7 +62,7 @@ const login = async (req: Request, res: Response, next: NextFunction): Promise<v
         if (!isPWValid) throw createError.Conflict('Password is not correct');
 
         const refreshToken = generateRefreshToken(user.id, user.role);
-        await setRefreshToken(user.id, refreshToken, 365 * 24 * 60 * 60);
+        await setRefreshToken(user.id, refreshToken, 365 * 24 * 60 * 60); // Expires in 1 Year
 
         const accessToken = generateAccessToken(user.id, user.role);
 
@@ -96,7 +98,7 @@ const refreshToken = async (req: Request, res: Response, next: NextFunction): Pr
     
         const newAccessToken = generateAccessToken(userId, userRole);
         const newRefreshToken = generateRefreshToken(userId, userRole);
-        await setRefreshToken(userId, newRefreshToken, 365 * 24 * 60 * 60);
+        await setRefreshToken(userId, newRefreshToken, 365 * 24 * 60 * 60); // Expires in 1 Year
     
         res.json({ refreshToken: newRefreshToken, accessToken: newAccessToken });
     } catch (error) {
@@ -145,11 +147,51 @@ const verifyMail = async (req: Request, res: Response, next: NextFunction): Prom
 }
 
 const forgotPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    res.send('forgotPassword');
+    try {
+        const body = validateEmailBody(req.body);
+        if (body.error) throw createError.BadRequest(body.error.message);
+    
+        const user = await prisma.user.findFirst({ where: { email: req.body.email }});
+        if (!user) throw createError.BadRequest('User not found');
+    
+        const randomToken = generateRandomToken();
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { 
+                resetPasswordToken: randomToken,
+                resetPasswordDate: new Date(new Date().getTime() + 15 * 60000) // 15 Minutes in the Future
+            }
+        });
+
+        MailClient.sendResetPasswordToken(user.email, randomToken);
+
+        res.json({ message: 'Reset-Password-Token sent via Mail' });
+    } catch (error) {
+        next(error);
+    }
 }
 
 const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    res.send('resetPassword');
+    try {
+        const body = validateResetPasswordBody(req.body);
+        if (body.error) throw createError.BadRequest(body.error.message);
+
+        const user = await prisma.user.findFirst({ where: { resetPasswordToken: body.value.resetPasswordToken }});
+        if (!user) throw createError.NotFound('User not found');
+        
+        const now = new Date();
+        if (user.resetPasswordDate < now) throw createError.Conflict('Password-Reset-Token expired');
+
+        const hashedPassword = await hashPassword(body.value.password);
+        await prisma.user.update({
+            where: { id: user.id},
+            data: { passwordHash: hashedPassword }
+        });
+
+        res.json({ message: 'Password has been reset' });
+    } catch (error) {
+        next(error);
+    }
 }
 
 const jwks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

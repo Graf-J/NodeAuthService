@@ -3,7 +3,9 @@ import {
     validateRegisterBody, 
     validateLoginBody,
     validateVerifyMailBody,
-    validateRefreshTokenBody
+    validateRefreshTokenBody,
+    validateEmailBody,
+    validateResetPasswordBody
 } from './auth.validators';
 
 describe('validateRegisterBody', () => {
@@ -157,3 +159,95 @@ describe('validateRefreshTokenBody', () => {
         expect(value).toEqual(data);
     });
 })
+
+describe('validateEmailBody', () => {
+    it('returns error if email is not provided', () => {
+        const data = { };
+        const { error } = validateEmailBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch(/"email" is required/);
+    });
+
+    it('returns error if email is not correct', () => {
+        const data = {
+            email: 'not-an-email'
+        };
+        const { error } = validateEmailBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch(/"email" must be a valid email/);
+    });
+
+    it('returns value if email is provided', () => {
+        const data = {
+            email: 'mario@gmail.com'
+        };
+        const { error, value } = validateEmailBody(data);
+        expect(error).toBeUndefined();
+        expect(value).toEqual(data);
+    });
+})
+
+describe('validateResetPaswordBody', () => {
+    it('returns error if resetPasswordToken is not provided', () => {
+        const data = {
+            password: 'password123',
+            comparePassword: 'password123'
+        };
+        const { error } = validateResetPasswordBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch(/"resetPasswordToken" is required/);
+    });
+
+    it('returns error if password is not provided', () => {
+        const data = {
+            resetPasswordToken: 'reset-password-token',
+            comparePassword: 'password123'
+        };
+        const { error } = validateResetPasswordBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch(/"password" is required/);
+    });
+
+    it('returns error if comparePassword is not provided', () => {
+        const data = {
+            resetPasswordToken: 'reset-password-token',
+            password: 'password123'
+        };
+        const { error } = validateResetPasswordBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch(/"comparePassword" is required/);
+    });
+
+    it('returns error if password is less than 6 characters', () => {
+        const data = {
+            resetPasswordToken: 'reset-password-token',
+            password: 'short',
+            comparePassword: 'short'
+        };
+        const { error } = validateResetPasswordBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch(/"password" length must be at least 6 characters long/);
+    });
+
+    it('returns error if comparePassword does not match password', () => {
+        const data = {
+            resetPasswordToken: 'reset-password-token',
+            password: 'password123',
+            comparePassword: 'not-the-same'
+        };
+        const { error } = validateResetPasswordBody(data);
+        expect(error).toBeDefined();
+        expect(error.message).toMatch("\"comparePassword\" must be [ref:password]");
+    });
+
+    it('returns value if all fields are valid', () => {
+        const data = {
+            resetPasswordToken: 'reset-password-token',
+            password: 'password123',
+            comparePassword: 'password123'
+        };
+        const { error, value } = validateResetPasswordBody(data);
+        expect(error).toBeUndefined();
+        expect(value).toEqual(data);
+    });
+});
